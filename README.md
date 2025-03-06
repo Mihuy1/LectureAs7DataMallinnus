@@ -19,6 +19,7 @@ Features
 - Java 13 JDK installed
 - Maven installed
 - MySQL 8.0 server running
+- Jakarta
 
 ## Database Setup
 

@@ -1,63 +1,79 @@
 package application;
 
-import dao.LibraryDao;
+import dao.AttendanceDAO;
+import dao.InstructorDAO;
+import dao.StudentDAO;
+import dao.TrainingSessionDAO;
 import entity.*;
 
-import java.time.LocalDate;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class KassaApp {
 	public static void main(String[] args) {
-		LibraryDao libraryDao = new LibraryDao();
+		StudentDAO studentDAO = new StudentDAO();
 
+		Student student1 = new Student("John Doe", "john@example.com", "rank 2", LocalDateTime.now());
+		Student student2 = new Student("Jane Doe", "jane@example.com", "rank 3", LocalDateTime.now());
 
-		Author author1 = new Author();
-		author1.setName("J.R.R. Tolkien");
+		ProgressReport progressReport1 = new ProgressReport(LocalDateTime.now(), "Achievements1", "Areas for improvement");
+		ProgressReport progressReport2 = new ProgressReport(LocalDateTime.now(), "Achievements2", "Areas for improvement");
 
-		Biography bio1 = new Biography();
-		bio1.setDetails("Author of The Lord of the Rings.");
-		bio1.setAuthor(author1);
-		author1.setBiography(bio1);
+		progressReport1.setStudent(student1);
+		progressReport2.setStudent(student2);
 
-		libraryDao.addAuthor(author1);
-		System.out.println("Added Author and Biography: " + author1.getName());
+		student1.getProgressReports().add(progressReport1);
+		student2.getProgressReports().add(progressReport2);
 
-		Book book1 = new Book();
-		book1.setTitle("The Hobbit");
+		studentDAO.saveStudent(student1, progressReport1);
+		studentDAO.saveStudent(student2, progressReport2);
 
-		Book book2 = new Book();
-		book2.setTitle("Murder on the Orient Express");
+		System.out.println("Students with rank 2:");
+		studentDAO.findStudentsByRank("rank 2").forEach(System.out::println);
+		System.out.println("Students with recent progress reports:");
+		studentDAO.findStudentsWithRecentProgressReports(LocalDateTime.now().minusDays(1)).forEach(System.out::println);
 
-		libraryDao.addBook(book1);
-		libraryDao.addBook(book2);
-		System.out.println("Added Books: " + book1.getTitle() + ", " + book2.getTitle());
+		// Create an Instructor
+		Instructor instructor = new Instructor("Instructor 1", "something 1", 5);
 
-		Student student1 = new Student();
-		student1.setName("John Doe");
+		// Create a TrainingSession
+		TrainingSession trainingSession = new TrainingSession(LocalDateTime.now(), "Location 1", 60);
 
-		Student student2 = new Student();
-		student2.setName("Emma Watson");
+		// Set the Instructor reference in the TrainingSession
+		trainingSession.setInstructor(instructor);
 
-		libraryDao.addStudent(student1);
-		libraryDao.addStudent(student2);
-		System.out.println("Added Students: " + student1.getName() + ", " + student2.getName());
+		// Add the TrainingSession to the Instructor's set of training sessions
+		instructor.getTrainingSessions().add(trainingSession);
 
-		// Borrow Books
-		BorrowedBook borrowedBook1 = new BorrowedBook();
-		borrowedBook1.setStudent(student1);
-		borrowedBook1.setBook(book1);
-		borrowedBook1.setBorrowDate(new Date());
+		// Save the Instructor (which will also save the TrainingSession due to cascade settings)
+		InstructorDAO instructorDAO = new InstructorDAO();
+		instructorDAO.saveInstructor(instructor);
 
-		BorrowedBook borrowedBook2 = new BorrowedBook();
-		borrowedBook2.setStudent(student2);
-		borrowedBook2.setBook(book2);
-		borrowedBook2.setBorrowDate(new Date());
+		System.out.println("Instructor has been saved successfully");
+		instructorDAO.findInstructorsBySpecialization("something 1").forEach(System.out::println);
 
-		libraryDao.addBorrowedBook(borrowedBook1);
-		libraryDao.addBorrowedBook(borrowedBook2);
-		System.out.println("Borrowed Books recorded.");
+		Attendance attendance = new Attendance(AttendanceStatus.PRESENT, "Good");
+		attendance.setStudent(student1);
+		attendance.setTrainingSession(trainingSession);
 
+		student1.getAttendances().add(attendance);
+		trainingSession.getAttendances().add(attendance);
+
+		AttendanceDAO attendanceDAO = new AttendanceDAO();
+
+		attendanceDAO.saveAttendance(attendance);
+
+		// Find training sessions attended by student
+		TrainingSessionDAO trainingSessionDAO = new TrainingSessionDAO();
+		List<TrainingSession> trainingSessions = trainingSessionDAO.findTrainingSessionByStudentId(student1.getId());
+		System.out.println("Training sessions attended by student:");
+		trainingSessions.forEach(System.out::println);
+
+		studentDAO.findStudentsJoinDate(LocalDateTime.now()).forEach(System.out::println);
+
+		trainingSessionDAO.findTrainingSessionByLocation("location 1").forEach(System.out::println);
+
+		instructorDAO.findInstructorsByExperience(5).forEach(System.out::println);
 
 	}
 }
